@@ -8,10 +8,9 @@ import unlinkFile from '../../../shared/unlinkFile';
 import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
+import { Documents } from '../document/document.model';
 
 const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
-  //set role
-  payload.role = USER_ROLES.USER;
   const createUser = await User.create(payload);
   if (!createUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create user');
@@ -37,6 +36,10 @@ const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
     { $set: { authentication } }
   );
 
+  if(createUser.role==USER_ROLES.PROVIDER){
+  await User.CreateUserDocumentsInitial(createUser._id)
+  }
+
   return createUser;
 };
 
@@ -48,8 +51,12 @@ const getUserProfileFromDB = async (
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
+  const documents = await Documents.findOne({user_id:id})
 
-  return isExistUser;
+  return {
+    ...isExistUser,
+    documents
+  };
 };
 
 const updateProfileToDB = async (

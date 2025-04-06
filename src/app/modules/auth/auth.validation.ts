@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DOCUMENTS_TYPES, USER_ROLES } from '../../../enums/user';
 
 const createVerifyEmailZodSchema = z.object({
   body: z.object({
@@ -41,10 +42,18 @@ const createChangePasswordZodSchema = z.object({
   }),
 });
 
+const createUploadDocumentsZodSchema = z.object({
+  body: z.object({
+    type:z.enum([DOCUMENTS_TYPES.ID_CARD,DOCUMENTS_TYPES.DRIVER_LICENSE,DOCUMENTS_TYPES.VEHICLE_REGISTRATION]),
+    image:z.any({required_error: 'Image is required'})
+  }),
+})
+
 export const AuthValidation = {
   createVerifyEmailZodSchema,
   createForgetPasswordZodSchema,
   createLoginZodSchema,
   createResetPasswordZodSchema,
   createChangePasswordZodSchema,
+  createUploadDocumentsZodSchema,
 };

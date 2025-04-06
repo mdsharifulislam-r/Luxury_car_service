@@ -16,6 +16,9 @@ import cryptoToken from '../../../util/cryptoToken';
 import generateOTP from '../../../util/generateOTP';
 import { ResetToken } from '../resetToken/resetToken.model';
 import { User } from '../user/user.model';
+import { DOCUMENTS_TYPES, USER_ROLES } from '../../../enums/user';
+import { Types } from 'mongoose';
+import { Documents } from '../document/document.model';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -247,10 +250,36 @@ const changePasswordToDB = async (
   await User.findOneAndUpdate({ _id: user.id }, updateData, { new: true });
 };
 
+const uploadDocumentsToDB = async (user:JwtPayload, type:DOCUMENTS_TYPES,frontend:string,backend:string)=>{
+  
+  if(!(user.role == USER_ROLES.PROVIDER)){
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Only provider can upload documents');
+  }
+  const obj = {
+    front_side:frontend,
+    back_side:backend
+  }
+
+  if(type=="ID_CARD"){
+    await Documents.findOneAndUpdate({user_id:user.id},{id_card:obj})
+  }
+  else if(type=="DRIVER_LICENSE"){
+
+    await Documents.findOneAndUpdate({user_id:user.id},{driving_license:{
+    ...obj
+    }})
+  }
+  else if(type=="VEHICLE_REGISTRATION"){
+    await Documents.findOneAndUpdate({user_id:user.id},{vehicle_registration:obj})
+  }
+  
+
+}
 export const AuthService = {
   verifyEmailToDB,
   loginUserFromDB,
   forgetPasswordToDB,
   resetPasswordToDB,
   changePasswordToDB,
+  uploadDocumentsToDB,
 };

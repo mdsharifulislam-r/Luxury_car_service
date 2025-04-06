@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { AuthService } from './auth.service';
+import ApiError from '../../../errors/ApiError';
 
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { ...verifyData } = req.body;
@@ -12,7 +13,7 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: result.message,
-    data: result.data,
+    data: result,
   });
 });
 
@@ -66,10 +67,31 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const uploadDocuments = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const files:any = req.files
+  const type = req.body.type;
+  const frontend = files?.image[0].filename
+  const backend = files?.image[1].filename
+
+
+  if(!frontend || !backend){
+    throw new ApiError(StatusCodes.BAD_REQUEST,"Images must be provided")
+  }
+  await AuthService.uploadDocumentsToDB(user,type, frontend, backend);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Documents uploaded successfully',
+  });
+  
+})
+
 export const AuthController = {
   verifyEmail,
   loginUser,
   forgetPassword,
   resetPassword,
   changePassword,
+  uploadDocuments,
 };

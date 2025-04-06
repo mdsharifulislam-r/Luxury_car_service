@@ -4,7 +4,16 @@ import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
 import { AuthController } from './auth.controller';
 import { AuthValidation } from './auth.validation';
+import { UserValidation } from '../user/user.validation';
+import { UserController } from '../user/user.controller';
+import fileUploadHandler from '../../middlewares/fileUploadHandler';
 const router = express.Router();
+
+router.post(
+  '/register',
+  validateRequest(UserValidation.createUserZodSchema),
+  UserController.createUser
+);
 
 router.post(
   '/login',
@@ -32,9 +41,16 @@ router.post(
 
 router.post(
   '/change-password',
-  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  auth(USER_ROLES.ADMIN, USER_ROLES.CUSTOMER, USER_ROLES.PROVIDER),
   validateRequest(AuthValidation.createChangePasswordZodSchema),
   AuthController.changePassword
 );
 
+router.post(
+  '/upload-document',
+  auth(USER_ROLES.PROVIDER),
+  fileUploadHandler(),
+  validateRequest(AuthValidation.createUploadDocumentsZodSchema),
+  AuthController.uploadDocuments
+);
 export const AuthRoutes = router;
