@@ -9,7 +9,7 @@ import { Subscription } from "./subscription.model";
 import { ISubscription } from "./subscription.interface";
 import { Types } from "mongoose";
 
-const stripe = new Stripe(config.stripe.stripe_secret!)
+export const stripe = new Stripe(config.stripe.stripe_secret!)
 
 const createSubscription = async (data:Partial<ISubscription>)=>{
   const product = await stripe.products.create({
@@ -155,9 +155,9 @@ const subscribeWebHook = async (req:Request)=>{
           end=0
           break;
         case 'customer.subscription.deleted':
+          const customerId = event.data.object.customer
           
-          
-            await User.CencelSubscription(event.data.object.customer_email)
+            await User.CencelSubscription(customerId)
             
           // Handle subscription cancellation
           break;
@@ -181,6 +181,15 @@ const subscribeWebHook = async (req:Request)=>{
   
 }
 
+const expireUserSubcription = async ()=>{
+  const users = await User.find({ 'subscriptions.end': {$lt: new Date()} })
+  if(users.length){
+    for(let user of users){
+      await User.CencelSubscription(user.customerId!)
+    }
+  }
+}
+
 export const SubscriptionService = {
     subscribePlanToUser,
     subscribeWebHook,
@@ -188,5 +197,6 @@ export const SubscriptionService = {
     updateSubscriptionToDB,
     deleteProduct,
     getSubscriptions,
-    manageSubscriptions
+    manageSubscriptions,
+    expireUserSubcription
 }

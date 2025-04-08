@@ -39,8 +39,10 @@ async function main() {
       },
     });
     socketHelper.socket(io);
+
     //@ts-ignore
     global.io = io;
+   
   } catch (error) {
     console.error(error);
     errorLogger.error(colors.red('🤢 Failed to connect Database'));

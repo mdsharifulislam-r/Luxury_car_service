@@ -9,7 +9,8 @@ import { Documents } from '../document/document.model';
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { ...userData } = req.body;
-    const result = await UserService.createUserToDB(userData);
+    const image = getSingleFilePath(req.files,'image')
+    const result = await UserService.createUserToDB({...userData, image});
 
     sendResponse(res, {
       success: true,

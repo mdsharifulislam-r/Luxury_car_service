@@ -9,6 +9,7 @@ import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
 import { Documents } from '../document/document.model';
+import { Socket } from 'socket.io';
 
 const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
   const createUser = await User.create(payload);
@@ -81,8 +82,35 @@ const updateProfileToDB = async (
   return updateDoc;
 };
 
+const getAndSetLiveLocationAndSaveToDB = async (socket:Socket)=>{
+  socket.on('set-location',async (user_id:string,longLat:number,lat:number)=>{
+    
+    const existUser = await User.findById(user_id)
+
+    
+    if(!existUser){
+      throw new Error('User not found')
+    }
+    if(existUser.liveLocation?.latitude==lat && existUser.liveLocation?.longitude==longLat){
+      return;
+    }
+  const sam = await User.findOneAndUpdate({_id:user_id},{liveLocation:{latitude:lat,longitude:longLat}}, {new:true})
+   
+  })
+  socket.on('get-location',async (userId:string)=>{
+    const  user  = socket.handshake.auth!
+    
+    const id = userId?userId:user.id
+    
+    const exuser = await User.findOne({_id:id}).select('liveLocation')
+    
+    socket.emit('location',exuser?.liveLocation)
+  })
+}
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
   updateProfileToDB,
+  getAndSetLiveLocationAndSaveToDB,
 };

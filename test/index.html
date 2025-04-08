@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Socket.IO Location Test</title>
+</head>
+<body>
+  <h2>Socket.IO Location Tester</h2>
+
+  <input type="text" id="token" placeholder="Bearer Token" style="width: 300px;"><br><br>
+
+  <input type="number" id="longitude" placeholder="Longitude" step="any">
+  <input type="number" id="latitude" placeholder="Latitude" step="any">
+  <button onclick="sendLocation()">Set Location</button><br><br>
+
+  <input type="text" id="userId" placeholder="User ID (optional)">
+  <button onclick="getLocation()">Get Location</button><br><br>
+
+  <pre id="output"></pre>
+
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script>
+    let socket;
+    const output = document.getElementById('output');
+
+    function log(msg) {
+      output.textContent += msg + '\n';
+    }
+
+    function connectSocket() {
+      const token = document.getElementById('token').value;
+      socket = io('http://10.0.70.50:5001', {
+        auth: {
+          token: `Bearer ${token}`
+        }
+      });
+
+      socket.on('connect', () => log('✅ Connected to socket.io'));
+      socket.on('connect_error', err => log('❌ Connection Error: ' + err.message));
+      socket.on('location', data => log('📍 Location: ' + JSON.stringify(data)));
+      socket.on('location-updated', data => log('✅ Location updated: ' + JSON.stringify(data)));
+      socket.on('error', err => log('⚠️ Error: ' + err));
+    }
+
+    function sendLocation() {
+      if (!socket) connectSocket();
+
+      const long = parseFloat(document.getElementById('longitude').value);
+      const lat = parseFloat(document.getElementById('latitude').value);
+
+      if (isNaN(long) || isNaN(lat)) return log('⚠️ Please enter valid longitude and latitude');
+
+      socket.emit('set-location', long, lat);
+    }
+
+    function getLocation() {
+      if (!socket) connectSocket();
+
+      const userId = document.getElementById('userId').value;
+      socket.emit('get-location', userId || undefined);
+    }
+  </script>
+</body>
+</html>

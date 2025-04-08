@@ -73,6 +73,22 @@ const userSchema = new Schema<IUser, UserModal>(
       required:false
 
     },
+    liveLocation: {
+      type: {
+        latitude: Number,
+        longitude: Number
+      },
+      default: null
+    },
+    accountInfo: {
+      type:{
+        stripeAccountId: String,
+        stripeAccountLink: String,
+        status: String,
+        anotherId: String
+      },
+      default: null
+    },
   },
 
   
@@ -141,19 +157,19 @@ userSchema.statics.updateUserSubscription= async (cutomerId:string, start:number
  
 }
 
-userSchema.statics.CencelSubscription= async (email:string)=>{
-  const user = await User.findOne({email});
+userSchema.statics.CencelSubscription= async (customer:string)=>{
+  console.log(customer);
+  
+  const user = await User.findOne({customerId:customer});
   if(!user){
     throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
   }
-  if(user.subscriptions && user.subscriptions.end > new Date()){
-    User.findOneAndUpdate({email:email},{
+
+    await User.findOneAndUpdate({customerId:customer},{
       subscriptions: null,
       customerId: null
     })
-  }else{
-    throw new ApiError(StatusCodes.FORBIDDEN, 'User does not have active subscription');
-  }
+ 
 }
 
 //check user

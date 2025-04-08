@@ -11,6 +11,7 @@ const router = express.Router();
 
 router.post(
   '/register',
+  fileUploadHandler(),
   validateRequest(UserValidation.createUserZodSchema),
   UserController.createUser
 );

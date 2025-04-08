@@ -92,6 +92,17 @@ const manageSubscriptions = catchAsync(
         })
     }
 )
+const expireAllUserSubscriptions = catchAsync(
+    async (req:Request,res:Response)=>{
+        await SubscriptionService.expireUserSubcription()
+        sendResponse(res,{
+            success: true,
+            statusCode: 200,
+            message: "All user subscriptions expired successfully"
+        })
+    })
+
+    
 export const SubscriptionController = {
     subscribePlan,
     subscribeWebHook,
@@ -99,5 +110,6 @@ export const SubscriptionController = {
     getSubscriptions,
     updateSubscription,
     deleteSubscription,
-    manageSubscriptions
+    manageSubscriptions,
+    expireAllUserSubscriptions
 }

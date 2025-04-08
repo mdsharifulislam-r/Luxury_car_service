@@ -25,6 +25,7 @@ export default {
   },
   stripe:{
     stripe_secret: process.env.STRIPE_SECRET_KEY,
-    webhook_secret: process.env.STRIPE_WEBHOOK_SECRET
+    webhook_secret: process.env.STRIPE_WEBHOOK_SECRET,
+    admin_stripe_account: process.env.ADMIN_STRIPE_ID
   }
 };

@@ -15,13 +15,23 @@ export type IUser = {
     oneTimeCode: number;
     expireAt: Date;
   };
+  liveLocation?:{
+    latitude: number;
+    longitude: number;
+  };
   subscriptions?:{
     subscriptionId:string;
     start:Date;
     end: Date;
     priceId:string
   },
-  customerId?:string
+  customerId?:string,
+  accountInfo?:{
+    stripeAccountId:string,
+    stripeAccountLink:string
+    status:string;
+    anotherId:string;
+  }
 };
 
 export type UserModal = {
@@ -30,6 +40,6 @@ export type UserModal = {
   isMatchPassword(password: string, hashPassword: string): boolean;
   CreateUserDocumentsInitial(id:Types.ObjectId):Promise<Boolean>;
   addSubscription(email: string,subscriptionId:string,start:number,end:number,priceId:string,customer_id:string):Promise<void>,
-  CencelSubscription(email:string):Promise<void>
+  CencelSubscription(customer:string):Promise<void>
   updateUserSubscription(customerId:string,start:number,end:number):Promise<void>
 } & Model<IUser>;
