@@ -32,7 +32,8 @@ export type IUser = {
     stripeAccountLink:string
     status:string;
     anotherId:string;
-  }
+  },
+  
 };
 
 export type UserModal = {

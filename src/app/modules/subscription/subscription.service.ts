@@ -71,9 +71,9 @@ const subscribePlanToUser = async (user:JwtPayload,priceId:string)=>{
 }
 
 const updateSubscriptionToDB = async(data:Partial<ISubscription>,id:Types.ObjectId)=>{
-  const subscription = await Subscription.findByIdAndUpdate(id, data, {new: true})
+  const subscription = await Subscription.findOneAndUpdate({_id:id,status:"active"}, data, {new: true})
   if(!subscription){
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Subscription not found')
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Subscription not found or Deleted')
   }
   if(data.title || data.description){
     const product = await stripe.products.update(subscription.productId, {
@@ -82,6 +82,7 @@ const updateSubscriptionToDB = async(data:Partial<ISubscription>,id:Types.Object
       
     })
   }
+  
 }
 
 const deleteProduct = async (product_id:Types.ObjectId)=>{
@@ -103,11 +104,11 @@ const deleteProduct = async (product_id:Types.ObjectId)=>{
       active:false,
     })
   }
-  return Subscription.findByIdAndDelete(product_id)
+  return await Subscription.findOneAndUpdate(product_id,{status:"delete"},{new:true})
 }
 
 const getSubscriptions = async ()=>{
-  const subscriptions = await Subscription.find({})
+  const subscriptions = await Subscription.find({status:{$ne:"delete"}})
   if(!subscriptions){
     throw new ApiError(StatusCodes.NOT_FOUND, 'No subscriptions found')
   }

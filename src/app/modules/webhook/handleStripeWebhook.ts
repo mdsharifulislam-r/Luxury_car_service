@@ -7,8 +7,6 @@ import ApiError from "../../../errors/ApiError";
 import { User } from "../user/user.model";
 import { Order } from "../order/order.model";
 
-let start = 0
-let end = 0
 export const HandleStrpeWebHook = async (req:Request)=>{
     
     let event: any;

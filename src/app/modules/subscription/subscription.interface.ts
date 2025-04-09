@@ -9,7 +9,8 @@ export type ISubscription={
     productId:string;
     inclusions:string[];
     Benefits:string[];
-    plan:SUBSCRIPTION_PLAN_TYPE
+    plan:SUBSCRIPTION_PLAN_TYPE;
+    status:string
 }
 
 export type SubscriptionModel={

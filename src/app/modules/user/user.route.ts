@@ -23,6 +23,7 @@ router
     }
   );
 
+  router.delete('/delete',auth(),validateRequest(UserValidation.createDeleteUserValidationZodSchema),UserController.deleteUser)
 
 
 export const UserRoutes = router;

@@ -14,6 +14,10 @@ const subscriptionSchema = new Schema<ISubscription,SubscriptionModel>({
     description: { type: String, required: false},
     price: { type: Number, required: true},
     plan: { type: String,enum:Object.values(SUBSCRIPTION_PLAN_TYPE), required: true},
+    status:{
+        type:String,
+        default:"active"
+    }
     
 },{
     timestamps: true,

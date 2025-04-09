@@ -21,7 +21,13 @@ const updateUserZodSchema = z.object({
   image: z.string().optional(),
 });
 
+const createDeleteUserValidationZodSchema = z.object({
+  body:z.object({
+    password:z.string({required_error:"Password is required"})
+  })
+})
 export const UserValidation = {
   createUserZodSchema,
   updateUserZodSchema,
+  createDeleteUserValidationZodSchema
 };

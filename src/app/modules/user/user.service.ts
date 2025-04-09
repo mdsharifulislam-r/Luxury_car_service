@@ -10,6 +10,8 @@ import { IUser } from './user.interface';
 import { User } from './user.model';
 import { Documents } from '../document/document.model';
 import { Socket } from 'socket.io';
+import { compare } from 'bcrypt';
+import { Service } from '../service/service.model';
 
 const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
   const createUser = await User.create(payload);
@@ -107,10 +109,36 @@ const getAndSetLiveLocationAndSaveToDB = async (socket:Socket)=>{
     socket.emit('location',exuser?.liveLocation)
   })
 }
+const deleteUserAccount = async (user:JwtPayload,password:string)=>{
+  const existUser = await User.findById(user.id).select("+password")
+  if(!existUser){
+    throw new ApiError(404,'Account Not found')
+  }
+  
+  const comparePassword = await compare(password,existUser.password)
 
+  
+  if(!comparePassword){
+    throw new ApiError(400,'Invalid credintials')
+
+  }
+  if(existUser.role == USER_ROLES.CUSTOMER){
+    await User.findOneAndUpdate({_id:existUser._id},{
+      status:"delete"
+    })
+    return
+  }
+  if(existUser.role == USER_ROLES.PROVIDER){
+    await User.findOneAndUpdate({_id:existUser._id},{
+      status:"delete"
+    })
+    await Service.deleteMany({provider:existUser._id})
+  }
+}
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
   updateProfileToDB,
   getAndSetLiveLocationAndSaveToDB,
+  deleteUserAccount
 };
