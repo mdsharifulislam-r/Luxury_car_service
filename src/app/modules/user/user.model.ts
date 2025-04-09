@@ -6,6 +6,8 @@ import { USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { IUser, UserModal } from './user.interface';
 import { Documents } from '../document/document.model';
+import Stripe from 'stripe';
+import { stripe } from '../subscription/subscription.service';
 
 const userSchema = new Schema<IUser, UserModal>(
   {
@@ -158,7 +160,6 @@ userSchema.statics.updateUserSubscription= async (cutomerId:string, start:number
 }
 
 userSchema.statics.CencelSubscription= async (customer:string)=>{
-  console.log(customer);
   
   const user = await User.findOne({customerId:customer});
   if(!user){
@@ -170,6 +171,37 @@ userSchema.statics.CencelSubscription= async (customer:string)=>{
       customerId: null
     })
  
+}
+userSchema.statics.HandleConnectStripe = async (data:Stripe.Account) =>{
+   // Find the user by Stripe account ID
+   const existingUser = await User.findOne({
+    email:data.email,
+});
+
+
+if (!existingUser) {
+    // throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+    console.log('user not found')
+    return
+}
+
+
+// Check if the onboarding is complete
+if (data.charges_enabled) {
+    const loginLink = await stripe.accounts.createLoginLink(data.id);
+
+    // Save Stripe account information to the user record
+    await User.findByIdAndUpdate(
+        { _id: existingUser?._id },
+        {
+          accountInfo:{
+            ...existingUser.accountInfo,
+            anotherId:loginLink.url
+          }
+        },
+        { new: true }
+    );
+}
 }
 
 //check user

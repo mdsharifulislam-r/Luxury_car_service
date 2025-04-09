@@ -4,8 +4,11 @@ import { StatusCodes } from 'http-status-codes';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import router from './routes';
 import { Morgan } from './shared/morgen';
+import { HandleStrpeWebHook } from './app/modules/webhook/handleStripeWebhook';
+import { SubscriptionService } from './app/modules/subscription/subscription.service';
 const app = express();
-
+app.post("/api/webhook", express.raw({type: 'application/json'}),HandleStrpeWebHook)
+app.post("/api/subscribe/webhook",express.raw({type:'application/json'}),SubscriptionService.subscribeWebHook)
 //morgan
 app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
@@ -20,7 +23,7 @@ app.use(express.static('uploads'));
 
 //router
 app.use('/api/v1', router);
-
+app.post("/api/stripe/webhook", express.raw({type: 'application/json'}),HandleStrpeWebHook)
 //live response
 app.get('/', (req: Request, res: Response) => {
   const date = new Date(Date.now());

@@ -6,10 +6,10 @@ import bodyParser from "body-parser"
 import validateRequest from '../../middlewares/validateRequest'
 import { SubscriptionValidation } from './subscription.validation'
 import fileUploadHandler from '../../middlewares/fileUploadHandler'
+import { SubscriptionService } from './subscription.service'
 const router = express.Router()
 
 router.post('/',fileUploadHandler(),auth(USER_ROLES.CUSTOMER),validateRequest(SubscriptionValidation.createSubscribePlanZodSchema), SubscriptionController.subscribePlan)
-router.post("/webhook",express.raw({ type: 'application/json' }),SubscriptionController.subscribeWebHook)
 router.post("/create",auth(),validateRequest(SubscriptionValidation.createSubscriptionZodSchema),SubscriptionController.createSubscription)
 router.get("/",SubscriptionController.getSubscriptions)
 router.put('/:id',auth(),validateRequest(SubscriptionValidation.updateSubscriptionZodSchema),SubscriptionController.updateSubscription)

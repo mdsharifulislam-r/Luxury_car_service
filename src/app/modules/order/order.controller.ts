@@ -63,8 +63,20 @@ const giveReminderToUsers = catchAsync(
         sendResponse(res, {
             statusCode: StatusCodes.OK,
             success: true,
-            message: "Order Retrieve Successfully",
+            message: "Reminder sent Successfully",
             data: orders,
+        });
+    })
+const completeOrder = catchAsync(
+    async (req: Request, res: Response) => {
+        const id = req.params.id;
+        const user = req.user;
+        const order = await OrderService.completeOrder( id as any,user);
+        sendResponse(res, {
+            statusCode: StatusCodes.OK,
+            success: true,
+            message: "Order Completed Successfully",
+            data: order,
         });
     })
 
@@ -74,5 +86,6 @@ export const OrderController = {
     getOrdersByUser,
     changeOrderStatus,
     giveReminderToUsers,
+    completeOrder,
     
 }

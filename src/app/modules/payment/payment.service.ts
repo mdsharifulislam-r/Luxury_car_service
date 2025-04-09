@@ -6,6 +6,7 @@ import { User } from "../user/user.model";
 
 const createStripeAccoutToDB = async (user:JwtPayload,stripe_id:string="")=>{
     const isExistUser = await User.findById(user.id);
+    
     if (!isExistUser) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
@@ -14,7 +15,7 @@ const createStripeAccoutToDB = async (user:JwtPayload,stripe_id:string="")=>{
     }
     if (stripe_id) {
         await User.findOneAndUpdate(
-            { _id: user.id },
+            { _id: user.id,verified: true },
             { $set: { 'accountInfo.stripeAccountId': stripe_id } }
         );
         return isExistUser;
@@ -27,11 +28,11 @@ const createStripeAccoutToDB = async (user:JwtPayload,stripe_id:string="")=>{
         capabilities: {
             card_payments: { requested: true },
             transfers: { requested: true },
+            
         },
         business_type: 'individual',
         individual: {
             first_name: isExistUser.name,
-            last_name: isExistUser.name,
             email: isExistUser.email,
         },
         business_profile:{
@@ -40,6 +41,8 @@ const createStripeAccoutToDB = async (user:JwtPayload,stripe_id:string="")=>{
                 url: "https://yourplatform.com",
         }
     });
+    
+    
     const accountLink = await stripe.accountLinks.create({
         account: account.id,
         refresh_url: 'https://your-website.com/reauth',
@@ -48,12 +51,17 @@ const createStripeAccoutToDB = async (user:JwtPayload,stripe_id:string="")=>{
       });
     await User.findOneAndUpdate(
         { _id: user.id },
-        { $set: { 'accountInfo.stripeAccountId': account.id, 'accountInfo.stripeAccountLink': accountLink.url } }
+        { accountInfo:{
+            stripeAccountId: account.id,
+            stripeAccountLink: accountLink.url,
+        } } 
     );
     if (!account) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create account');
     }
-    return accountLink.url;
+    return {
+        accountLink,
+    };
 }
 
 const paymentToProvider = async (user:JwtPayload,amount:number)=>{}

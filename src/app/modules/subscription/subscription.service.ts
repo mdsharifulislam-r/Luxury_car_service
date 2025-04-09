@@ -130,8 +130,33 @@ let start =0
 let end = 0
 
 const subscribeWebHook = async (req:Request)=>{
+
     
-    const event = req.body
+  let event: any
+
+  // Verify the event signature
+  try {
+      
+      // Use raw request body for verification
+      event = stripe.webhooks.constructEvent(
+          req.body, 
+          req.headers['stripe-signature'] as string, 
+          config.stripe.webhook_secret as string
+      );
+      
+  } catch (error) {
+      
+      // Return an error if verification fails
+      throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          `Webhook signature verification failed. ${error}`,
+      );
+  }
+
+  // Check if the event is valid
+  if (!event) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid event received!');
+  }
     
     switch (event.type) {
         case 'payment_intent.succeeded':

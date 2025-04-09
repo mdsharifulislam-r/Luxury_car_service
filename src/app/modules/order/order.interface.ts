@@ -15,6 +15,9 @@ export type IOrder = {
     };
     status:ORDER_STATUS,
     orderId:string;
+    paymentId?:string;
 }
 
-export type OrderModel= Model<IOrder>
+export type OrderModel= Model<IOrder>&{
+    setPaymentIntent:(data:any,payment_id:string)=>Promise<void>;
+}

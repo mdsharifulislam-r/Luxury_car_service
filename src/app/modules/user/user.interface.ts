@@ -1,5 +1,6 @@
 import { Model, Types } from 'mongoose';
 import { USER_ROLES } from '../../../enums/user';
+import Stripe from 'stripe';
 
 export type IUser = {
   name: string;
@@ -41,5 +42,6 @@ export type UserModal = {
   CreateUserDocumentsInitial(id:Types.ObjectId):Promise<Boolean>;
   addSubscription(email: string,subscriptionId:string,start:number,end:number,priceId:string,customer_id:string):Promise<void>,
   CencelSubscription(customer:string):Promise<void>
-  updateUserSubscription(customerId:string,start:number,end:number):Promise<void>
+  updateUserSubscription(customerId:string,start:number,end:number):Promise<void>,
+  HandleConnectStripe(data:Stripe.Account):Promise<void>
 } & Model<IUser>;

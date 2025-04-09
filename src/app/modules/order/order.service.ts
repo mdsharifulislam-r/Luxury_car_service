@@ -10,8 +10,10 @@ import { User } from "../user/user.model";
 import { ORDER_STATUS } from "../../../enums/orderStatus";
 import ApiError from "../../../errors/ApiError";
 import { timeHelper } from "../../../helpers/timeHelper";
+import { stripe } from "../subscription/subscription.service";
+import { IUser } from "../user/user.interface";
 
-const createOrderToDB = async (user:JwtPayload,order: Partial<IOrder>): Promise<IOrder> => {
+const createOrderToDB = async (user:JwtPayload,order: Partial<IOrder>) => {
     const service = await Service.findById(order.service).lean()
     if (!service) {
         throw new Error("Service not found");
@@ -20,25 +22,45 @@ const createOrderToDB = async (user:JwtPayload,order: Partial<IOrder>): Promise<
     const booking_fee = Number((service.price * (5/100)).toFixed(2))
     const total_amount = Number((service.price + booking_fee).toFixed(2))
     const orderId = sizableToken(10)
-    const newOrder = await Order.create({
+    const newOrder = {
         ...order,
         provider,
         booking_fee,
         total_amount,
         customer: user.id,
         orderId,
-    });
-    const customer_details = await User.findById(newOrder.customer)
-   await sendNotifications({
-        title: `You have a new order from ${customer_details?.name}`,
-        read:false,
-        text:`${customer_details?.name} has booked ${service.title} service at ${order.date}`,
-        direction:"service",
-        sender:newOrder.customer,
-        receiver:provider,
-        link:`/book/${newOrder._id}`,
+    };
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+            {
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: service.title,
+                        description: service.description,
+                    },
+                    unit_amount: total_amount * 100,
+                },
+                quantity: 1,
+            },
+        ],
+        mode: 'payment',
+        success_url: `http://local/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `http://local/success?session_id={CHECKOUT_SESSION_ID}`,
+        metadata:{
+            orderData:JSON.stringify(newOrder),
+        },
+        client_reference_id: orderId,
+        customer_email: user.email,
     })
-    return newOrder;
+    if (!session) {
+        throw new ApiError(400,"Failed to create session")
+    }
+    
+    
+
+    return session.url ;
 }
 
 const getOrderById = async (id:Types.ObjectId): Promise<IOrder> => {
@@ -106,7 +128,7 @@ const getOrdersByUserId = async (user: JwtPayload,query:Record<string,any>) => {
 
 const acceptOrRejectOrderInDB = async (user: JwtPayload, orderId: Types.ObjectId, status: ORDER_STATUS)=> {
     const userInfo = await User.findById(user.id).lean()
-    if(!userInfo?.accountInfo?.stripeAccountId && status === ORDER_STATUS.IN_PROGRESS){
+    if((!userInfo?.accountInfo?.stripeAccountId) && (status === ORDER_STATUS.IN_PROGRESS)){
         throw new ApiError(400,"You need to connect your stripe account to accept this order")
     }
     if(status == ORDER_STATUS.COMPLETED){
@@ -125,34 +147,110 @@ const acceptOrRejectOrderInDB = async (user: JwtPayload, orderId: Types.ObjectId
             link:`/book/${order?._id}`,
         })
     }
+    if(status == ORDER_STATUS.REJECTED){
+        const refund = await stripe.refunds.create({
+            amount: order?.total_amount! * 100,
+            payment_intent: order?.paymentId,
+        })
+        console.log(refund);
+        const k =await Order.findOneAndUpdate({_id:orderId,provider:user.id}, { status,paymentId:null}, { new: true })
+        sendNotifications({
+            title: `Booking Rejected!`,
+            read:false,
+            text:`${userInfo?.name} has rejected your order ${order?.orderId}. Refund has been initiated`,
+            direction:"service",
+            sender:user.id,
+            receiver:order?.customer,
+            link:`/book/${order?._id}`,
+        })
+    }
     if(!order){
         throw new ApiError(400,"Order not found")
     }
     return order
 }
 
-const giveReminderToUsers = async ()=>{
+const giveReminderToUsers = async () => {
+    const now:any = new Date();
+  
     const orders = await Order.find({
-        $and:[
-            { status: ORDER_STATUS.IN_PROGRESS },
-            {
-                $or: [
+      status: ORDER_STATUS.IN_PROGRESS,
 
-                    { "schedule.start_date": { $lte: new Date() } },
-                    { "schedule.end_date": { $lte: new Date() } },
-                ],
-            },
-            
-            { createdAt: { $gte: new Date() } },
-        ]
-    })
-    console.log(orders);
+    }).populate("customer")
+
+    orders.forEach(order => {
+        const { customer, schedule,date } = order as any;
+        const endDate:any = new Date(schedule?.end_date||date);
+      const days = timeHelper.timeAgo(endDate)
+      if(days === "1 days ago"){
+        sendNotifications({
+            title: `Reminder`,
+            read:false,
+            text:`${customer.name} tomorow is your service at ${timeHelper.extractDateAndTime(schedule?.end_date).time}`,
+            direction:"service",
+            sender:order?.provider,
+            receiver:order?.customer._id,
+            link:`/book/${order?._id}`,
+        })
+      }
+      
+        // Send reminder (e.g., email, SMS, socket)
+      });
+      
+      
     
-}
+  };
+
+const completeOrder = async (orderId:Types.ObjectId,user:JwtPayload) => {
+    
+    const order = await Order.findOne({_id:orderId,customer:user.id}).populate(['customer',"provider"]).lean()
+
+    if(!order){
+        throw new ApiError(400,"Order not found")
+    }
+    
+    
+    if(order.status !== ORDER_STATUS.IN_PROGRESS){
+        throw new ApiError(400,"Order not in progress")
+    }
+    const temp:any =order.provider
+    const provider:IUser = temp
+    
+    const transfer = await stripe.transfers.create({
+        amount: 4000,
+        currency: 'usd',
+        destination:provider.accountInfo?.stripeAccountId!,
+      });
+      
+    if(!transfer){
+        throw new ApiError(400,"Transfer failed")
+    }
+    const k = await Order.findOneAndUpdate({_id:orderId,customer:user.id}, { status: ORDER_STATUS.COMPLETED }, { new: true })
+    sendNotifications({
+        title: `Booking Completed!`,
+        read:false,
+        text:`${provider.name} has completed your order ${k?.orderId}`,
+        direction:"service",
+        sender:order?.provider._id,
+        receiver:order?.customer._id,
+    })
+    const customer = order.customer as any as IUser
+    sendNotifications({
+        title: `Payment Completed!`,
+        read:false,
+        text:`${customer.name} has paid ${k?.total_amount} for your order ${k?.orderId}`,
+        direction:"service",
+        sender:order?.customer._id,
+        receiver:order?.provider._id,
+    })
+    return transfer.destination
+  }
+  
 export const OrderService = {
     createOrderToDB,
     getOrderById,
     getOrdersByUserId,
     acceptOrRejectOrderInDB,
-    giveReminderToUsers
+    giveReminderToUsers,
+    completeOrder,
 }
