@@ -27,4 +27,7 @@ const messageSchema = new Schema<IMessage, MessageModel>(
   }
 );
 
+messageSchema.index({chatId:1})
+
+
 export const Message = model<IMessage, MessageModel>('Message', messageSchema);

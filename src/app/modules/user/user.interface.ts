@@ -20,12 +20,7 @@ export type IUser = {
     latitude: number;
     longitude: number;
   };
-  subscriptions?:{
-    subscriptionId:string;
-    start:Date;
-    end: Date;
-    priceId:string
-  },
+  subscriptions?:Types.ObjectId,
   customerId?:string,
   accountInfo?:{
     stripeAccountId:string,
@@ -33,7 +28,7 @@ export type IUser = {
     status:string;
     anotherId:string;
   },
-  
+
 };
 
 export type UserModal = {

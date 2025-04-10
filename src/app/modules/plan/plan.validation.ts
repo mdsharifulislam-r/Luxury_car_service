@@ -29,7 +29,7 @@ const createSubscribePlanZodSchema = z.object({
       })
 })
 
-export const SubscriptionValidation = {
+export const PlanValidation = {
     createSubscriptionZodSchema,
     updateSubscriptionZodSchema,
     createSubscribePlanZodSchema,

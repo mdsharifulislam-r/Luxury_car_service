@@ -1,29 +1,54 @@
-import mongoose, { Schema, Types } from "mongoose";
+import { model, Schema } from "mongoose";
 import { ISubscription, SubscriptionModel } from "./subscription.interface";
-import { User } from "../user/user.model";
-import ApiError from "../../../errors/ApiError";
-import { USER_ROLES } from "../../../enums/user";
-import { SUBSCRIPTION_PLAN_TYPE } from "../../../enums/subscriptionPlan";
 
-const subscriptionSchema = new Schema<ISubscription,SubscriptionModel>({
-    priceId: { type: String, required: true },
-    productId: { type: String, required: true },
-    inclusions: [{ type: String }],
-    Benefits: [{ type: String }],
-    title: { type: String, required: true},
-    description: { type: String, required: false},
-    price: { type: Number, required: true},
-    plan: { type: String,enum:Object.values(SUBSCRIPTION_PLAN_TYPE), required: true},
-    status:{
-        type:String,
-        default:"active"
+
+const subscriptionSchema = new Schema<ISubscription, SubscriptionModel>(
+    {
+        customerId: {
+            type: String,
+            required: true
+        },
+        price: {
+            type: Number,
+            required: true
+        },
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+        trxId: {
+            type: String,
+            required: true
+        },
+        subscriptionId: {
+            type: String,
+            required: true
+        },
+        currentPeriodStart: {
+            type: String,
+            required: true
+        },
+        currentPeriodEnd: {
+            type: String,
+            required: true
+        },
+        plan:{
+            type:Schema.Types.ObjectId,
+            ref:"Plan",
+            required:true
+        },
+        status: {
+            type: String,
+            enum: ["expired", "active", "cancel"],
+            default: "active",
+            required: true
+        },
+
+    },
+    {
+        timestamps: true
     }
-    
-},{
-    timestamps: true,
-})
+)
 
-
-
-
-export const Subscription = mongoose.model<ISubscription, SubscriptionModel>("Subscription", subscriptionSchema);
+export const Subscription = model<ISubscription, SubscriptionModel>("Subscription", subscriptionSchema)

@@ -54,4 +54,6 @@ router.post(
   validateRequest(AuthValidation.createUploadDocumentsZodSchema),
   AuthController.uploadDocuments
 );
+
+router.post("/refresh-token",AuthController.refreshAccessToken)
 export const AuthRoutes = router;

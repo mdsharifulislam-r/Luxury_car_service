@@ -9,6 +9,7 @@ export type IService = {
     category: SERVICE_CATEGORY;
     car_model:string;
     image:string;
+    status?:string
 }
 
 export type ServiceModel = {

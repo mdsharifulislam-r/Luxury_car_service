@@ -23,7 +23,7 @@ const createServiceToDB = async (user:JwtPayload,data:Partial<IService>)=>{
 }
 
 const getAllServicesFromDB = async (query:Record<string,any>)=>{
-    const result = new QueryBuilder(Service.find(),query).paginate().filter().sort()
+    const result = new QueryBuilder(Service.find({status:{$ne:"delete"}}),query).paginate().filter().sort()
     const paginationInfo = await result.getPaginationInfo()
     const services = await result.modelQuery.populate(['provider'],['name','image']).lean()
     const newService = await Promise.all(services.map(async (service)=>{
@@ -40,7 +40,7 @@ const getAllServicesFromDB = async (query:Record<string,any>)=>{
 }
 
 const getServiceByIdFromDB = async (id:Types.ObjectId)=>{
-    const service = await Service.findById(id).populate(['provider'],['name','image']).lean()
+    const service = await Service.findOne({_id:id,status:"active"}).populate(['provider'],['name','image']).lean()
     if(!service){
         throw new ApiError(StatusCodes.NOT_FOUND, 'Service not found')
     }
@@ -48,7 +48,7 @@ const getServiceByIdFromDB = async (id:Types.ObjectId)=>{
 }
 
 const updateServiceByIdToDB = async (id:Types.ObjectId,data:Partial<IService>)=>{
-    const service = await Service.findById(id)
+    const service = await Service.findOne({_id:id})
     if(!service){
         throw new ApiError(StatusCodes.NOT_FOUND, 'Service not found')
     }
@@ -65,9 +65,9 @@ const updateServiceByIdToDB = async (id:Types.ObjectId,data:Partial<IService>)=>
 
 const deleteServiceByIdFromDB = async (id:Types.ObjectId,user:JwtPayload)=>{
     if(user.role==USER_ROLES.ADMIN){
-        return await Service.findByIdAndDelete(id)
+        return await Service.findByIdAndUpdate(id,{status:"delete"})
     }
-    const deletedService = await Service.findOneAndDelete({_id:id,provider:user.id})
+    const deletedService = await Service.findOneAndUpdate({_id:id,provider:user.id},{status:"delete"})
     if(!deletedService){
         throw new ApiError(StatusCodes.NOT_FOUND, 'Service not found')
     }

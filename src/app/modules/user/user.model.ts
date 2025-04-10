@@ -7,7 +7,7 @@ import ApiError from '../../../errors/ApiError';
 import { IUser, UserModal } from './user.interface';
 import { Documents } from '../document/document.model';
 import Stripe from 'stripe';
-import { stripe } from '../subscription/subscription.service';
+import { stripe } from '../plan/plan.service';
 
 const userSchema = new Schema<IUser, UserModal>(
   {
@@ -63,12 +63,9 @@ const userSchema = new Schema<IUser, UserModal>(
       select: 0,
     },
     subscriptions: {
-      type:{
-        subscriptionId: String,
-        start: Date,
-        end: Date,
-        priceId:String
-      }
+      type:Schema.Types.ObjectId,
+      ref:"Subscription",
+      default:false
     },
     customerId: {
       type: String,
@@ -124,40 +121,9 @@ userSchema.statics.isMatchPassword = async (
   return await bcrypt.compare(password, hashPassword);
 };
 
-userSchema.statics.addSubscription = async (email:string,subscription_id:string,start:number,end:number,priceId:string,customer:string)=>{
-  
-  const sub= {
-    subscriptionId: subscription_id,
-    start: new Date(start*1000),
-    end: new Date(end*1000),
-    priceId: priceId
-  }
-  await User.findOneAndUpdate({email:email},{
-    subscriptions: sub,
-    customerId: customer
-  })
-}
 
-userSchema.statics.updateUserSubscription= async (cutomerId:string, start:number, end:number)=>{
-  console.log(cutomerId);
-  const user = await User.findOne({customerId:cutomerId})
-  if(!user){
-    throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-  }
-  if(user.subscriptions){
-    User.findOneAndUpdate({customerId:cutomerId},{
-      subscriptions: {
-        subscriptionId: user.subscriptions.subscriptionId,
-        start: new Date(start*1000),
-        end: new Date(end*1000),
-        priceId: user.subscriptions.priceId
-      }
-    })
-  }else{
-    throw new ApiError(StatusCodes.FORBIDDEN, 'User does not have active subscription');
-  }
- 
-}
+
+
 
 userSchema.statics.CencelSubscription= async (customer:string)=>{
   
@@ -174,6 +140,8 @@ userSchema.statics.CencelSubscription= async (customer:string)=>{
 }
 userSchema.statics.HandleConnectStripe = async (data:Stripe.Account) =>{
    // Find the user by Stripe account ID
+
+   
    const existingUser = await User.findOne({
     email:data.email,
 });
@@ -187,21 +155,20 @@ if (!existingUser) {
 
 
 // Check if the onboarding is complete
-if (data.charges_enabled) {
-    const loginLink = await stripe.accounts.createLoginLink(data.id);
 
+    const loginLink = await stripe.accounts.createLoginLink(data.id);
     // Save Stripe account information to the user record
-    await User.findByIdAndUpdate(
-        { _id: existingUser?._id },
-        {
-          accountInfo:{
-            ...existingUser.accountInfo,
-            anotherId:loginLink.url
-          }
-        },
-        { new: true }
+    await User.findOneAndUpdate(
+      { _id: existingUser?._id },
+      {
+        $set: {
+          'accountInfo.anotherId': loginLink.url,
+        }
+      },
+      { new: true }
     );
-}
+    
+
 }
 
 //check user

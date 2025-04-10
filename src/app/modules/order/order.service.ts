@@ -10,7 +10,7 @@ import { User } from "../user/user.model";
 import { ORDER_STATUS } from "../../../enums/orderStatus";
 import ApiError from "../../../errors/ApiError";
 import { timeHelper } from "../../../helpers/timeHelper";
-import { stripe } from "../subscription/subscription.service";
+import { stripe } from "../plan/plan.service";
 import { IUser } from "../user/user.interface";
 
 const createOrderToDB = async (user:JwtPayload,order: Partial<IOrder>) => {
@@ -152,7 +152,6 @@ const acceptOrRejectOrderInDB = async (user: JwtPayload, orderId: Types.ObjectId
             amount: order?.total_amount! * 100,
             payment_intent: order?.paymentId,
         })
-        console.log(refund);
         const k =await Order.findOneAndUpdate({_id:orderId,provider:user.id}, { status,paymentId:null}, { new: true })
         sendNotifications({
             title: `Booking Rejected!`,
@@ -171,11 +170,9 @@ const acceptOrRejectOrderInDB = async (user: JwtPayload, orderId: Types.ObjectId
 }
 
 const giveReminderToUsers = async () => {
-    const now:any = new Date();
-  
+
     const orders = await Order.find({
       status: ORDER_STATUS.IN_PROGRESS,
-
     }).populate("customer")
 
     orders.forEach(order => {

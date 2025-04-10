@@ -16,6 +16,7 @@ const sendMessageToDB = async (payload: Partial<IMessage>): Promise<IMessage> =>
       _id: { $ne: payload.sender }, // Exclude sender from participants
     },
   })
+  
   if (!chat) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Chat not found");
   }

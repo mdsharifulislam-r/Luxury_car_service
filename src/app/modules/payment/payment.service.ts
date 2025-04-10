@@ -1,5 +1,5 @@
 import { JwtPayload } from "jsonwebtoken";
-import { stripe } from "../subscription/subscription.service";
+import { stripe } from "../plan/plan.service";
 import ApiError from "../../../errors/ApiError";
 import { StatusCodes } from "http-status-codes";
 import { User } from "../user/user.model";

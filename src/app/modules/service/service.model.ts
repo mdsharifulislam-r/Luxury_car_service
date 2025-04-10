@@ -32,9 +32,19 @@ const serviceSchema = new Schema<IService,ServiceModel>({
     image: {
         type: String,
         required: true
+    },
+    status:{
+        type:String,
+        required:false,
+        default:"active"
     }
 },{
     timestamps: true,
 })
+serviceSchema.index({ status: 1 });
+serviceSchema.index({ provider: 1 });
+serviceSchema.index({ category: 1 });
+serviceSchema.index({ location: 1 });
+serviceSchema.index({ createdAt: -1 });
 
 export const Service = model<IService, ServiceModel>("Service", serviceSchema);

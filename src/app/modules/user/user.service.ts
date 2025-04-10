@@ -122,17 +122,19 @@ const deleteUserAccount = async (user:JwtPayload,password:string)=>{
     throw new ApiError(400,'Invalid credintials')
 
   }
-  if(existUser.role == USER_ROLES.CUSTOMER){
+
     await User.findOneAndUpdate({_id:existUser._id},{
       status:"delete"
     })
-    return
-  }
+ 
   if(existUser.role == USER_ROLES.PROVIDER){
     await User.findOneAndUpdate({_id:existUser._id},{
       status:"delete"
     })
-    await Service.deleteMany({provider:existUser._id})
+    
+    await Service.updateMany({provider:existUser._id,status:{
+      $ne:"delete"
+    }},{status:"delete"})
   }
 }
 export const UserService = {

@@ -1,4 +1,4 @@
-import { stripe } from "../app/modules/subscription/subscription.service";
+import { stripe } from "../app/modules/plan/plan.service";
 
 const refund = async (paymentId: string,amount:number) => {
     const refund = await stripe.refunds.create({

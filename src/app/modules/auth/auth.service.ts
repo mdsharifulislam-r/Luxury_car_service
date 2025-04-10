@@ -58,8 +58,20 @@ const loginUserFromDB = async (payload: ILoginData) => {
     config.jwt.jwt_secret as Secret,
     config.jwt.jwt_expire_in as string
   );
+  const refreshToken = cryptoToken()
 
-  return { createToken };
+  await ResetToken.deleteMany({ user: isExistUser._id });
+ await ResetToken.create({
+    token:refreshToken,
+    user: isExistUser._id,
+    expireAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), //7 days
+  })
+  
+
+  return { 
+    accessToken:createToken,
+    refreshToken:refreshToken
+   };
 };
 
 //forget password
@@ -275,6 +287,33 @@ const uploadDocumentsToDB = async (user:JwtPayload, type:DOCUMENTS_TYPES,fronten
   
 
 }
+
+// Refresh Access Token
+const refreshAccessTokenDB = async (token: string) => {
+    
+  const existToken = ResetToken.isExistToken(token);
+  if (!existToken) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid token');
+  }
+  const isExipire = ResetToken.isExpireToken(token);
+  if (!isExipire) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Token expired');
+  }
+  const leanUser = await ResetToken.findOne({token}).populate(["user"],['_id','email','role']).select('user')
+  const user:any = leanUser?.user;
+
+  
+  if (!user) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not found');
+  }
+  const accessToken = jwtHelper.createToken({ id: user?._id, role: user?.role },config.jwt.jwt_secret!,config.jwt.jwt_expire_in!);
+  const refreshToken = token
+  await ResetToken.findOneAndUpdate({user:user._id}, {$set: {token: refreshToken, expireAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1),}})
+  return { accessToken, refreshToken };
+  
+  
+};
+
 export const AuthService = {
   verifyEmailToDB,
   loginUserFromDB,
@@ -282,4 +321,5 @@ export const AuthService = {
   resetPasswordToDB,
   changePasswordToDB,
   uploadDocumentsToDB,
+  refreshAccessTokenDB
 };

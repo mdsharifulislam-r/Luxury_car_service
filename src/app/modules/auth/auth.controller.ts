@@ -25,7 +25,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'User logged in successfully.',
-    data: result.createToken,
+    data: result,
   });
 });
 
@@ -87,6 +87,24 @@ const uploadDocuments = catchAsync(async (req: Request, res: Response) => {
   
 })
 
+const refreshAccessToken = catchAsync(async (req: Request, res: Response) =>{
+  const barerToken = req.headers.authorization;
+  if(!barerToken){
+    throw new ApiError(StatusCodes.BAD_REQUEST,"Token not provided")
+  }
+  const token = barerToken.split(" ")[1]
+  if(!token){
+    throw new ApiError(StatusCodes.NOT_FOUND,"Token not found")
+  }
+  const result = await AuthService.refreshAccessTokenDB(token!);
+  sendResponse(res,{
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Access token refreshed successfully.',
+    data: result,
+  });
+  })
+
 export const AuthController = {
   verifyEmail,
   loginUser,
@@ -94,4 +112,5 @@ export const AuthController = {
   resetPassword,
   changePassword,
   uploadDocuments,
+  refreshAccessToken
 };

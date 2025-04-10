@@ -28,4 +28,6 @@ const reviewSchema = new Schema<IReview,ReviewModel>({
 }, { timestamps: true
 })
 
+reviewSchema.index({ service: 1 });
+
 export const Review = model<IReview, ReviewModel>("Review", reviewSchema);

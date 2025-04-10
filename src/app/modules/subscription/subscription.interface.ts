@@ -1,17 +1,15 @@
-import { Model, Types } from "mongoose";
-import { SUBSCRIPTION_PLAN_TYPE } from "../../../enums/subscriptionPlan";
+import { Model, Types } from 'mongoose';
 
-export type ISubscription={
-    title:string;
-    description?:string;
-    price:number;
-    priceId:string;
-    productId:string;
-    inclusions:string[];
-    Benefits:string[];
-    plan:SUBSCRIPTION_PLAN_TYPE;
-    status:string
-}
+export type ISubscription = {
+    customerId: string;
+    price: number;
+    user: Types.ObjectId;
+    plan: Types.ObjectId;
+    trxId: string;
+    subscriptionId: string;
+    status: 'expired' | 'active' | 'cancel';
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+};
 
-export type SubscriptionModel={
-}&Model<ISubscription>
+export type SubscriptionModel = Model<ISubscription, Record<string, unknown>>;
