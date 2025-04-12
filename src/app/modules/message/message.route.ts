@@ -20,4 +20,10 @@ router.get(
   MessageController.getMessage
 );
 
+router.patch(
+  '/:id',
+  auth(USER_ROLES.CUSTOMER, USER_ROLES.PROVIDER),
+  MessageController.seenMessage
+);
+
 export const MessageRoutes = router;

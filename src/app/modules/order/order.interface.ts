@@ -16,6 +16,7 @@ export type IOrder = {
     status:ORDER_STATUS,
     orderId:string;
     paymentId?:string;
+    assistant_number:number
 
 }
 

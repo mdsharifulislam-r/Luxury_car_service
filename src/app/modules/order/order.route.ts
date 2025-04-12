@@ -13,4 +13,5 @@ router.get('/', auth(), OrderController.getOrdersByUser);
 router.patch('/:id', auth(USER_ROLES.PROVIDER), validateRequest(orderValidation.changeOrderStatusZodSchema), OrderController.changeOrderStatus);
 router.post("/reminder",OrderController.giveReminderToUsers)
 router.post("/complete/:id",auth(USER_ROLES.CUSTOMER),OrderController.completeOrder)
+router.delete("/cancel/:id",auth(USER_ROLES.CUSTOMER),OrderController.cancelOrder)
 export const OrderRoutes = router;

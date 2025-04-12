@@ -19,6 +19,9 @@ const createBookOrderZodSchema = z.object({
             start_date: z.string({}).optional(),
             end_date: z.string({}).optional()
         }).optional(),
+        assistant_number: z.number({
+            required_error: 'Assistant number is required'
+        }).optional()
 
     })
 })

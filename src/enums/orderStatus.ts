@@ -3,4 +3,5 @@ export enum ORDER_STATUS {
     REJECTED = 'rejected',
     COMPLETED = 'completed',
     IN_PROGRESS = 'in_progress',
+    CANCELLED = 'cancelled'
 }

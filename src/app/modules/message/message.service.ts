@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import { User } from '../user/user.model';
 import { sendNotifications } from '../../../helpers/notificationHelper';
 import { Chat } from '../chat/chat.model';
+import QueryBuilder from '../../builder/QueryBuilder';
 
 const sendMessageToDB = async (payload: Partial<IMessage>): Promise<IMessage> => {
 
@@ -23,7 +24,7 @@ const sendMessageToDB = async (payload: Partial<IMessage>): Promise<IMessage> =>
 
   const receiver = chat?.participants[0]?._id;
 
-  const sender = await User.findById(payload.sender).select("firstName")
+  const sender = await User.findById(payload.sender).select("name")
 
   // save to DB
   const response = await Message.create(payload);
@@ -47,10 +48,27 @@ const sendMessageToDB = async (payload: Partial<IMessage>): Promise<IMessage> =>
   return response;
 };
 
-const getMessageFromDB = async (id: any): Promise<IMessage[]> => {
-  const messages = await Message.find({ chatId: id })
-    .sort({ createdAt: -1 })
-  return messages;
+const getMessageFromDB = async (id: any,query:Record<string,any>) => {
+  const result = new QueryBuilder(Message.find({ chatId: id }),query).paginate().sort()
+    
+  const paginationInfo = await result.getPaginationInfo()
+  const messages = await result.modelQuery.populate(['sender'],['name','image']).lean()
+  
+  return {
+    messages:messages.reverse(),
+    paginationInfo
+  }
 };
 
-export const MessageService = { sendMessageToDB, getMessageFromDB };
+const seenMessageFromDB = async (id: any)  => {
+
+  const data = await Message.updateMany({ chatId: id,seen:{
+    $ne: true
+  } },{seen:true})
+  
+  
+
+  return true
+}
+
+export const MessageService = { sendMessageToDB, getMessageFromDB, seenMessageFromDB };

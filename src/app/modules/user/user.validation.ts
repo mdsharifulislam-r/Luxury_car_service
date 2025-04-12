@@ -26,8 +26,16 @@ const createDeleteUserValidationZodSchema = z.object({
     password:z.string({required_error:"Password is required"})
   })
 })
+
+const createLocationValidationZodSchema = z.object({
+  body:z.object({
+    latitude:z.number({required_error:"latitude is required"}),
+    longitude:z.number({required_error:"longitude is required"})
+  })
+})
 export const UserValidation = {
   createUserZodSchema,
   updateUserZodSchema,
-  createDeleteUserValidationZodSchema
+  createDeleteUserValidationZodSchema,
+  createLocationValidationZodSchema
 };

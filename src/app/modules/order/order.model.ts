@@ -60,6 +60,11 @@ const orderSchema = new Schema<IOrder,OrderModel>({
         type: String,
         required: false,
     },
+    assistant_number:{
+        type: Number,
+        required: false,
+        default:0
+    }
 }, { timestamps: true }); 
 
 orderSchema.statics.setPaymentIntent= async(data:any,paymentid:string)=> {
@@ -94,4 +99,6 @@ orderSchema.statics.setPaymentIntent= async(data:any,paymentid:string)=> {
     })
 
 }
+
+orderSchema.index({status:1})
 export const Order = model<IOrder, OrderModel>("Order", orderSchema);

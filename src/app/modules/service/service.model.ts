@@ -41,10 +41,6 @@ const serviceSchema = new Schema<IService,ServiceModel>({
 },{
     timestamps: true,
 })
-serviceSchema.index({ status: 1 });
-serviceSchema.index({ provider: 1 });
-serviceSchema.index({ category: 1 });
-serviceSchema.index({ location: 1 });
-serviceSchema.index({ createdAt: -1 });
+serviceSchema.index({status:1})
 
 export const Service = model<IService, ServiceModel>("Service", serviceSchema);

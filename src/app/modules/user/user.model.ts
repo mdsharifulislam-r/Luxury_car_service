@@ -65,7 +65,7 @@ const userSchema = new Schema<IUser, UserModal>(
     subscriptions: {
       type:Schema.Types.ObjectId,
       ref:"Subscription",
-      default:false
+      default:null
     },
     customerId: {
       type: String,
@@ -125,19 +125,7 @@ userSchema.statics.isMatchPassword = async (
 
 
 
-userSchema.statics.CencelSubscription= async (customer:string)=>{
-  
-  const user = await User.findOne({customerId:customer});
-  if(!user){
-    throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-  }
 
-    await User.findOneAndUpdate({customerId:customer},{
-      subscriptions: null,
-      customerId: null
-    })
- 
-}
 userSchema.statics.HandleConnectStripe = async (data:Stripe.Account) =>{
    // Find the user by Stripe account ID
 

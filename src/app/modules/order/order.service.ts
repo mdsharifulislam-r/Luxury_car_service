@@ -87,10 +87,13 @@ const getOrderById = async (id:Types.ObjectId): Promise<IOrder> => {
 
 
 const getOrdersByUserId = async (user: JwtPayload,query:Record<string,any>) => {
-    const result = new QueryBuilder(Order.find({ $or:[
-        { customer: user.id },
-        { provider: user.id }
-    ]}),query).paginate().sort().filter()
+    
+    const result = new QueryBuilder(Order.find({
+        $or: [
+            { customer: user.id },
+            { provider: user.id },
+        ]
+    }),query).paginate().sort().filter()
     const paginatedResult = await result.getPaginationInfo()
     const orders = await result.modelQuery.populate([
         {
@@ -105,8 +108,8 @@ const getOrdersByUserId = async (user: JwtPayload,query:Record<string,any>) => {
             path: "service",
             select: "title description price image car_model price",
         }
-    ])
-    .lean()
+    ]).lean()
+    
 
     const formatOrders = orders.map((order:any) => {
         const timeAndDate = timeHelper.extractDateAndTime(order.date)
@@ -135,8 +138,9 @@ const acceptOrRejectOrderInDB = async (user: JwtPayload, orderId: Types.ObjectId
         throw new ApiError(400,"You cannot complete this order")
     }
 
-    const order =await Order.findOneAndUpdate({_id:orderId,provider:user.id}, { status }, { new: true })
+    
     if(status == ORDER_STATUS.IN_PROGRESS){
+        const order =await Order.findOneAndUpdate({_id:orderId}, { status }, { new: true })
         sendNotifications({
             title: `Booking Confirmed!`,
             read:false,
@@ -146,13 +150,16 @@ const acceptOrRejectOrderInDB = async (user: JwtPayload, orderId: Types.ObjectId
             receiver:order?.customer,
             link:`/book/${order?._id}`,
         })
+        return order
     }
     if(status == ORDER_STATUS.REJECTED){
+        const order =await Order.findOne({_id:orderId}).lean()
+        
         const refund = await stripe.refunds.create({
-            amount: order?.total_amount! * 100,
+            amount: (order?.total_amount!-order?.booking_fee!) * 100,
             payment_intent: order?.paymentId,
         })
-        const k =await Order.findOneAndUpdate({_id:orderId,provider:user.id}, { status,paymentId:null}, { new: true })
+        const k =await Order.findOneAndUpdate({_id:orderId}, { status}, { new: true })
         sendNotifications({
             title: `Booking Rejected!`,
             read:false,
@@ -162,11 +169,9 @@ const acceptOrRejectOrderInDB = async (user: JwtPayload, orderId: Types.ObjectId
             receiver:order?.customer,
             link:`/book/${order?._id}`,
         })
+        return k
     }
-    if(!order){
-        throw new ApiError(400,"Order not found")
-    }
-    return order
+  
 }
 
 const giveReminderToUsers = async () => {
@@ -190,13 +195,60 @@ const giveReminderToUsers = async () => {
             link:`/book/${order?._id}`,
         })
       }
-      
+
         // Send reminder (e.g., email, SMS, socket)
       });
-      
-      
+
+      const LatePandingOrder = await Order.find({
+        status:ORDER_STATUS.PENDING,
+        createdAt: {
+            $lte: new Date(Date.now() - 24 * 60 * 60 * 2000)
+        }
+    }).populate("customer")
+
+    LatePandingOrder.forEach(order => {
+        const { customer } = order as any;
+        sendNotifications({
+            title: `Reminder`,
+            read:false,
+            text:`${customer.name}'s order is pending for more than 2 days. Please accept or reject the order ${order?.orderId} otherwise it will be cancelled at tommorow`,
+            direction:"service",
+            sender:order?.customer._id,
+            receiver:order?.provider,
+            link:`/book/${order?._id}`,
+        })
+    })
+
     
   };
+
+
+const cencelOrder = async (orderId:Types.ObjectId,user:JwtPayload) => {
+    const order = await Order.findOne({_id:orderId,customer:user.id}).populate(['customer',"provider"]).lean()
+
+    if(!order){
+        throw new ApiError(400,"Order not found")
+    }
+    
+    if(order.status !== ORDER_STATUS.PENDING){
+        throw new ApiError(400,"You cannot cancel this order")
+    }
+    const refund = await stripe.refunds.create({
+        amount: order?.total_amount! * 100,
+        payment_intent: order?.paymentId,
+    })
+   await Order.findOneAndUpdate({_id:orderId,customer:user.id}, { status: ORDER_STATUS.CANCELLED }, { new: true }).populate(['customer',"provider"]).lean()
+   const { customer } = order as any
+    sendNotifications({
+        title: `Booking Cancelled!`,
+        read:false,
+        text:`${customer.name} has cancelled his order ${order?.orderId}`,
+        direction:"service",
+        sender:order?.customer._id,
+        receiver:order?.provider,
+        link:`/book/${order?._id}`,
+    })
+}
 
 const completeOrder = async (orderId:Types.ObjectId,user:JwtPayload) => {
     
@@ -250,4 +302,5 @@ export const OrderService = {
     acceptOrRejectOrderInDB,
     giveReminderToUsers,
     completeOrder,
+    cencelOrder
 }

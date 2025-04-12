@@ -30,13 +30,26 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
 
 const getMessage = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
-  const messages = await MessageService.getMessageFromDB(id);
+  const query = req.query;
+  const messages = await MessageService.getMessageFromDB(id,query);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'Message Retrieve Successfully',
+    data: messages.messages,
+    pagination: messages.paginationInfo,
+  });
+});
+
+const seenMessage = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const messages = await MessageService.seenMessageFromDB(id);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Message seen Successfully',
     data: messages,
   });
 });
 
-export const MessageController = { sendMessage, getMessage };
+export const MessageController = { sendMessage, getMessage, seenMessage };

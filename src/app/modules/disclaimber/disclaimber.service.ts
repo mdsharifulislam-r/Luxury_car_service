@@ -15,7 +15,8 @@ const createDisclaimberToDB = async (data:IDisclamber)=>{
 }
 
 const getDislaiberByTypes = async (type:DISCLAIMBER_TYPE)=>{
-    const disclaimber = await Disclaimber.findOne({type});
+    const disclaimber = await Disclaimber.findOne({type}).lean();
+    
     return disclaimber;
 }
 

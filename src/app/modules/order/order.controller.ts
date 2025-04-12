@@ -79,7 +79,19 @@ const completeOrder = catchAsync(
             data: order,
         });
     })
-
+const cancelOrder = catchAsync(
+    async (req: Request, res: Response) => {
+        const id = req.params.id;
+        const user = req.user;
+        const order = await OrderService.cencelOrder( id as any,user);
+        sendResponse(res, {
+            statusCode: StatusCodes.OK,
+            success: true,
+            message: "Order Canceled Successfully",
+            data: order,
+        });
+    }
+)
 export const OrderController = {
     createOrder,
     getOrder,
@@ -87,5 +99,6 @@ export const OrderController = {
     changeOrderStatus,
     giveReminderToUsers,
     completeOrder,
+    cancelOrder
     
 }

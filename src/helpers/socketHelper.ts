@@ -11,7 +11,6 @@ const socket = (io: Server) => {
 
   io.on('connection', socket => {
     logger.info(colors.blue('A user connected'));
-    UserService.getAndSetLiveLocationAndSaveToDB(socket)
     //disconnect
     socket.on('disconnect', () => {
       logger.info(colors.red('A user disconnect'));

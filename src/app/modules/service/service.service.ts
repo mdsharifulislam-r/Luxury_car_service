@@ -26,6 +26,7 @@ const getAllServicesFromDB = async (query:Record<string,any>)=>{
     const result = new QueryBuilder(Service.find({status:{$ne:"delete"}}),query).paginate().filter().sort()
     const paginationInfo = await result.getPaginationInfo()
     const services = await result.modelQuery.populate(['provider'],['name','image']).lean()
+    
     const newService = await Promise.all(services.map(async (service)=>{
         return {
             ...service,
@@ -40,11 +41,17 @@ const getAllServicesFromDB = async (query:Record<string,any>)=>{
 }
 
 const getServiceByIdFromDB = async (id:Types.ObjectId)=>{
-    const service = await Service.findOne({_id:id,status:"active"}).populate(['provider'],['name','image']).lean()
+    const service = await Service.findOne({_id:id,status:{
+        $ne:"delete"
+    }}).populate(['provider'],['name','image']).lean()
+    const rating = (await ReviewService.getReviewFromDB(id)).rating||0
     if(!service){
         throw new ApiError(StatusCodes.NOT_FOUND, 'Service not found')
     }
-    return service
+    return {
+        ...service,
+        rating
+    }
 }
 
 const updateServiceByIdToDB = async (id:Types.ObjectId,data:Partial<IService>)=>{

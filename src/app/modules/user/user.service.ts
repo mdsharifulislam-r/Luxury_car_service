@@ -84,30 +84,22 @@ const updateProfileToDB = async (
   return updateDoc;
 };
 
-const getAndSetLiveLocationAndSaveToDB = async (socket:Socket)=>{
-  socket.on('set-location',async (user_id:string,longLat:number,lat:number)=>{
+const getAndSetLiveLocationAndSaveToDB = async (user:JwtPayload,latitude:number,longitude:number)=>{
+  const existUser:any = await User.findById(user.id).select("+password")
+  if(!existUser){
+    throw new ApiError(404,'Account Not found')
+  }
+    // @ts-ignore
+    const io = global.io;
+  if(existUser.liveLocation && (latitude==existUser.liveLocation.latitude && longitude==existUser.liveLocation.longitude)){
+    io.emit(`liveLocation::${existUser._id}`, existUser.liveLocation);
     
-    const existUser = await User.findById(user_id)
+  }
+  await User.findOneAndUpdate({_id:existUser._id},{liveLocation:{latitude,longitude}})
 
-    
-    if(!existUser){
-      throw new Error('User not found')
-    }
-    if(existUser.liveLocation?.latitude==lat && existUser.liveLocation?.longitude==longLat){
-      return;
-    }
-  const sam = await User.findOneAndUpdate({_id:user_id},{liveLocation:{latitude:lat,longitude:longLat}}, {new:true})
-   
-  })
-  socket.on('get-location',async (userId:string)=>{
-    const  user  = socket.handshake.auth!
-    
-    const id = userId?userId:user.id
-    
-    const exuser = await User.findOne({_id:id}).select('liveLocation')
-    
-    socket.emit('location',exuser?.liveLocation)
-  })
+
+    io.emit(`liveLocation::${existUser._id}`, {latitude,longitude});
+
 }
 const deleteUserAccount = async (user:JwtPayload,password:string)=>{
   const existUser = await User.findById(user.id).select("+password")

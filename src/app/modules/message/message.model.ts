@@ -21,13 +21,18 @@ const messageSchema = new Schema<IMessage, MessageModel>(
       type: String,
       required: false 
     },
+    seen: { 
+      type: Boolean,
+      required: false,
+      default: false
+    },
   },
   {
     timestamps: true,
   }
 );
 
+messageSchema.index({chatId:1,seen:1})
 messageSchema.index({chatId:1})
-
 
 export const Message = model<IMessage, MessageModel>('Message', messageSchema);
