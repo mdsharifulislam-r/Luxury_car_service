@@ -64,6 +64,11 @@ const orderSchema = new Schema<IOrder,OrderModel>({
         type: Number,
         required: false,
         default:0
+    },
+    app_fee:{
+        type: Number,
+        required: false,
+        default:0
     }
 }, { timestamps: true }); 
 

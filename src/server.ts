@@ -6,6 +6,7 @@ import config from './config';
 import { seedSuperAdmin } from './DB/seedAdmin';
 import { socketHelper } from './helpers/socketHelper';
 import { errorLogger, logger } from './shared/logger';
+import { getCategorysEnumFromDB } from './enums/serviceCatagories';
 
 //uncaught exception
 process.on('uncaughtException', error => {
@@ -39,7 +40,6 @@ async function main() {
       },
     });
     socketHelper.socket(io);
-
     //@ts-ignore
     global.io = io;
    

@@ -68,18 +68,28 @@ const deleteUser = catchAsync(
   }
 )
 
-const setLiveLocation = catchAsync(
-  async (req: Request, res: Response) => {
-    const user = req.user;
-    const { latitude, longitude } = req.body;
-    const data = await UserService.getAndSetLiveLocationAndSaveToDB(user, latitude, longitude);
-    sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      success: true,
-      message: 'Location updated successfully',
-      data: data,
-    });
-  }
-);
 
-export const UserController = { createUser, getUserProfile, updateProfile,deleteUser, setLiveLocation };
+const getSubcription = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const result = await UserService.getSubScriptionsOfUserFromDB(user);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Subcription data retrieved successfully',
+    data: result,
+  });
+});
+
+const setLocation = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const { latitude, longitude } = req.body;
+  const data = await UserService.setInitalLocation(user, latitude, longitude);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Location updated successfully',
+    data: data,
+  });
+});
+
+export const UserController = { createUser, getUserProfile, updateProfile,deleteUser,getSubcription,setLocation };

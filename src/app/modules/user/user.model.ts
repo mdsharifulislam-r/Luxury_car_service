@@ -72,7 +72,7 @@ const userSchema = new Schema<IUser, UserModal>(
       required:false
 
     },
-    liveLocation: {
+    location: {
       type: {
         latitude: Number,
         longitude: Number
@@ -88,6 +88,9 @@ const userSchema = new Schema<IUser, UserModal>(
       },
       default: null
     },
+    address:{
+      type: String,
+    }
   },
 
   

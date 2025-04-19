@@ -12,6 +12,7 @@ import ApiError from "../../../errors/ApiError";
 import { timeHelper } from "../../../helpers/timeHelper";
 import { stripe } from "../plan/plan.service";
 import { IUser } from "../user/user.interface";
+import { IService } from "../service/service.interface";
 
 const createOrderToDB = async (user:JwtPayload,order: Partial<IOrder>) => {
     const service = await Service.findById(order.service).lean()
@@ -29,6 +30,7 @@ const createOrderToDB = async (user:JwtPayload,order: Partial<IOrder>) => {
         total_amount,
         customer: user.id,
         orderId,
+        app_fee:booking_fee
     };
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -252,7 +254,7 @@ const cencelOrder = async (orderId:Types.ObjectId,user:JwtPayload) => {
 
 const completeOrder = async (orderId:Types.ObjectId,user:JwtPayload) => {
     
-    const order = await Order.findOne({_id:orderId,customer:user.id}).populate(['customer',"provider"]).lean()
+    const order = await Order.findOne({_id:orderId,customer:user.id}).populate(['customer',"provider","service"]).lean()
 
     if(!order){
         throw new ApiError(400,"Order not found")
@@ -264,9 +266,11 @@ const completeOrder = async (orderId:Types.ObjectId,user:JwtPayload) => {
     }
     const temp:any =order.provider
     const provider:IUser = temp
+    const service = order.service as any as IService
+
     
     const transfer = await stripe.transfers.create({
-        amount: 4000,
+        amount: (service.price-order?.booking_fee!) * 100,
         currency: 'usd',
         destination:provider.accountInfo?.stripeAccountId!,
       });

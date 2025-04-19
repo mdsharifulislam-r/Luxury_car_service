@@ -43,7 +43,8 @@ const getMessage = catchAsync(async (req: Request, res: Response) => {
 
 const seenMessage = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
-  const messages = await MessageService.seenMessageFromDB(id);
+  const user = req.user;
+  const messages = await MessageService.seenMessageFromDB(id,user);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,

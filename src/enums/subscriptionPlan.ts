@@ -4,3 +4,4 @@ export enum SUBSCRIPTION_PLAN_TYPE{
     MONTH ='month',
     YEAR ='year'
 }
+

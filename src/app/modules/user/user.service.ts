@@ -12,6 +12,7 @@ import { Documents } from '../document/document.model';
 import { Socket } from 'socket.io';
 import { compare } from 'bcrypt';
 import { Service } from '../service/service.model';
+import { Subscription } from '../subscription/subscription.model';
 
 const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
   const createUser = await User.create(payload);
@@ -84,23 +85,7 @@ const updateProfileToDB = async (
   return updateDoc;
 };
 
-const getAndSetLiveLocationAndSaveToDB = async (user:JwtPayload,latitude:number,longitude:number)=>{
-  const existUser:any = await User.findById(user.id).select("+password")
-  if(!existUser){
-    throw new ApiError(404,'Account Not found')
-  }
-    // @ts-ignore
-    const io = global.io;
-  if(existUser.liveLocation && (latitude==existUser.liveLocation.latitude && longitude==existUser.liveLocation.longitude)){
-    io.emit(`liveLocation::${existUser._id}`, existUser.liveLocation);
-    
-  }
-  await User.findOneAndUpdate({_id:existUser._id},{liveLocation:{latitude,longitude}})
 
-
-    io.emit(`liveLocation::${existUser._id}`, {latitude,longitude});
-
-}
 const deleteUserAccount = async (user:JwtPayload,password:string)=>{
   const existUser = await User.findById(user.id).select("+password")
   if(!existUser){
@@ -129,10 +114,27 @@ const deleteUserAccount = async (user:JwtPayload,password:string)=>{
     }},{status:"delete"})
   }
 }
+
+const getSubScriptionsOfUserFromDB = async (user:JwtPayload)=>{
+  const subscription = await Subscription.findOne({user:user.id,status:"active"}).populate('plan')
+  if(!subscription){
+    throw new ApiError(404,'user not using any subscription')
+  }
+  return subscription
+}
+
+const setInitalLocation = async (user:JwtPayload,latitude:number,longitude:number)=>{
+
+ const userData= await User.findOneAndUpdate({_id:user.id},{location:{latitude,longitude}},{new:true})
+
+ return userData
+
+}
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
   updateProfileToDB,
-  getAndSetLiveLocationAndSaveToDB,
-  deleteUserAccount
+  deleteUserAccount,
+  getSubScriptionsOfUserFromDB,
+  setInitalLocation
 };

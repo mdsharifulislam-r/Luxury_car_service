@@ -26,7 +26,6 @@ const serviceSchema = new Schema<IService,ServiceModel>({
     },
     category: {
         type: String,
-        enum: Object.values(SERVICE_CATEGORY),
         required: true
     },
     image: {

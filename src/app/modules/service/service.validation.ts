@@ -6,7 +6,7 @@ export const createServiceZodSchema = z.object({
     title: z.string({required_error:"title required"}),
     price: z.string({required_error:"price required"}),
     description: z.string().optional(),
-    category: z.nativeEnum(SERVICE_CATEGORY), // Replace with actual categories
+    category:z.string({required_error:"category required"}), // Replace with actual categories
     car_model: z.string({required_error:" car_model required"}),
     image: z.any(),
   })

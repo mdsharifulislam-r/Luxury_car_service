@@ -7,7 +7,7 @@ export type IUser = {
   role: USER_ROLES;
   email: string;
   password: string;
-  location: string;
+  address: string;
   image?: string;
   status: 'active' | 'delete';
   verified: boolean;
@@ -16,7 +16,7 @@ export type IUser = {
     oneTimeCode: number;
     expireAt: Date;
   };
-  liveLocation?:{
+  location?:{
     latitude: number;
     longitude: number;
   };

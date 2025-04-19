@@ -8,8 +8,13 @@ import { StatusCodes } from "http-status-codes";
 import { USER_ROLES } from "../../../enums/user";
 import unlinkFile from "../../../shared/unlinkFile";
 import { ReviewService } from "../review/review.service";
+import { getCategorysEnumFromDB } from "../../../enums/serviceCatagories";
 
 const createServiceToDB = async (user:JwtPayload,data:Partial<IService>)=>{
+    const categories = await getCategorysEnumFromDB()
+    if(!categories.includes(data.category)){
+        throw new ApiError(StatusCodes.BAD_REQUEST,"Invalid category")
+    }
     const newService = new Service({
         provider: user.id,
         title: data.title,

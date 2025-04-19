@@ -7,6 +7,7 @@ import { User } from '../user/user.model';
 import { sendNotifications } from '../../../helpers/notificationHelper';
 import { Chat } from '../chat/chat.model';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { JwtPayload } from 'jsonwebtoken';
 
 const sendMessageToDB = async (payload: Partial<IMessage>): Promise<IMessage> => {
 
@@ -60,12 +61,11 @@ const getMessageFromDB = async (id: any,query:Record<string,any>) => {
   }
 };
 
-const seenMessageFromDB = async (id: any)  => {
+const seenMessageFromDB = async (id: any,user:JwtPayload)  => {
 
   const data = await Message.updateMany({ chatId: id,seen:{
     $ne: true
-  } },{seen:true})
-  
+  },sender:{$ne:user.id} },{seen:true})
   
 
   return true

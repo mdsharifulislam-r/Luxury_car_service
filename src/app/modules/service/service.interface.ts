@@ -6,7 +6,7 @@ export type IService = {
     title:string;
     price:number;
     description?:string;
-    category: SERVICE_CATEGORY;
+    category: string;
     car_model:string;
     image:string;
     status?:string

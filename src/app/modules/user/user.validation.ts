@@ -6,7 +6,7 @@ const createUserZodSchema = z.object({
     name: z.string({ required_error: 'Name is required' }),
     email: z.string({ required_error: 'Email is required' }),
     password: z.string({ required_error: 'Password is required' }),
-    location: z.string({ required_error: 'Location is required' }),
+    address: z.string({ required_error: 'address is required' }),
     profile: z.string().optional(),
     role:z.enum([USER_ROLES.SUPER_ADMIN,USER_ROLES.CUSTOMER,USER_ROLES.PROVIDER])
   }),

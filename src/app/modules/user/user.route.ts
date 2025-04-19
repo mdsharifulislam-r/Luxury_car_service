@@ -25,7 +25,7 @@ router
 
   router.delete('/delete',auth(),validateRequest(UserValidation.createDeleteUserValidationZodSchema),UserController.deleteUser)
 
-  router.post('/location',auth(USER_ROLES.CUSTOMER,USER_ROLES.PROVIDER),validateRequest(UserValidation.createLocationValidationZodSchema),UserController.setLiveLocation)
-
+  router.post('/location',auth(USER_ROLES.CUSTOMER,USER_ROLES.PROVIDER),validateRequest(UserValidation.createLocationValidationZodSchema),UserController.setLocation)
+  router.get('/subscrption',auth(USER_ROLES.CUSTOMER),UserController.getSubcription)
 
 export const UserRoutes = router;
